@@ -1,7 +1,30 @@
 package sasl
 
+import (
+	"strings"
+)
+
 // The LOGIN mechanism name.
 const Login = "LOGIN"
+
+type loginClient struct {
+	Username string
+	Password string
+}
+
+func (a *loginClient) Start() (mech string, ir []byte, err error) {
+	mech = Login
+	ir = []byte(a.Username)
+	return
+}
+
+func (a *loginClient) Next(challenge []byte) (response []byte, err error) {
+	if strings.Contains(string(response), "Password") {
+		return []byte(a.Password), nil
+	} else {
+		return nil, ErrUnexpectedServerChallenge
+	}
+}
 
 // Authenticates users with an username and a password.
 type LoginAuthenticator func(username, password string) error
@@ -16,9 +39,9 @@ const (
 )
 
 type loginServer struct {
-	state loginState
+	state              loginState
 	username, password string
-	authenticate LoginAuthenticator
+	authenticate       LoginAuthenticator
 }
 
 // A server implementation of the LOGIN authentication mechanism, as described
